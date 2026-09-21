@@ -138,3 +138,17 @@ mark { background: color-mix(in srgb, var(--medium) 35%, transparent); color: in
   .prob { flex-wrap: wrap; }
   .controls .danger { margin-left: 0; }
 }
+
+/* Problem of the day + source label */
+.potd { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; padding: 16px 18px; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--brand); border-radius: var(--radius); box-shadow: var(--shadow); }
+.potd[hidden] { display: none; }
+.potd .eyebrow { margin-bottom: 4px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--brand); }
+.potd-title { display: inline-flex; align-items: center; gap: 6px; font-size: 18px; font-weight: 700; color: var(--ink); text-decoration: none; }
+.potd-title:hover { color: var(--brand); }
+.potd-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+.potd-meta .tag { padding: 2px 8px; border-radius: 999px; background: var(--panel-2); color: var(--muted); font-size: 12px; font-weight: 600; }
+.potd-actions { display: flex; align-items: center; gap: 14px; }
+.solve-btn { padding: 9px 16px; border-radius: 10px; background: var(--brand); color: #fff; font-weight: 700; font-size: 14px; text-decoration: none; }
+.solve-btn:hover { filter: brightness(1.1); }
+.potd-done { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.src { padding: 2px 7px; border-radius: 6px; background: var(--panel-2); color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .02em; }

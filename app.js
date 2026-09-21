@@ -56,10 +56,10 @@
     ...t, ti,
     topics: t.topics.map(tp => ({
       ...tp,
-      items: tp.items.map(([title, diff, slug]) => {
+      items: tp.items.map(([title, diff, slug, url]) => {
         if (seen.has(slug)) console.warn("Duplicate problem id:", slug);
         seen.add(slug);
-        return { id: slug, title, diff, url: `https://leetcode.com/problems/${slug}/` };
+        return { id: slug, title, diff, url: url || `https://leetcode.com/problems/${slug}/`, src: url ? "GfG" : "" };
       }),
     })),
   }));
@@ -113,6 +113,7 @@
     return `<li class="prob ${d ? "done" : ""}" data-id="${i.id}">
       <label class="tick"><input type="checkbox" ${d ? "checked" : ""} aria-label="Mark ${esc(i.title)} as done"><span></span></label>
       <a class="name" href="${i.url}" target="_blank" rel="noopener">${hi(i.title)}${ico.ext}</a>
+      ${i.src ? `<span class="src" title="Hosted on GeeksforGeeks">${i.src}</span>` : ""}
       <span class="chip ${i.diff}">${i.diff}</span>
       <button class="icon flag ${f ? "on" : ""}" data-act="flag" title="Mark to revisit" aria-pressed="${f}">${ico.flag}</button>
       <button class="icon note ${n ? "on" : ""}" data-act="note" title="${n ? esc(n) : "Add a note"}">${ico.note}</button>
@@ -146,7 +147,31 @@
     $("#empty").hidden = shown > 0;
   }
 
-  const render = () => { renderOverview(); renderRail(); renderPanel(); };
+  // ---- LeetCode problem of the day (served by a Netlify function; hidden if unavailable) ----
+  let potd = null;
+  function renderPotd() {
+    const box = $("#potd"); if (!box) return;
+    if (!potd) { box.hidden = true; return; }
+    const done = !!state.done[potd.slug];
+    const when = new Date(potd.date + "T00:00:00Z").toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+    box.hidden = false;
+    box.innerHTML = `<div class="potd-main">
+        <div class="eyebrow">LeetCode problem of the day · ${when}</div>
+        <a class="potd-title" href="${potd.url}" target="_blank" rel="noopener">${esc(potd.title)}${ico.ext}</a>
+        <div class="potd-meta"><span class="chip ${potd.difficulty}">${potd.difficulty}</span>${potd.tags.slice(0, 4).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>
+      </div>
+      <div class="potd-actions">
+        <a class="solve-btn" href="${potd.url}" target="_blank" rel="noopener">Solve now</a>
+        <label class="potd-done"><input type="checkbox" ${done ? "checked" : ""}> Done</label>
+      </div>`;
+  }
+  $("#potd").addEventListener("change", e => {
+    if (e.target.type !== "checkbox" || !potd) return;
+    state.done[potd.slug] = e.target.checked; save(); push(potd.slug); render();
+  });
+  fetch("/.netlify/functions/potd").then(r => r.ok ? r.json() : Promise.reject()).then(d => { potd = d; renderPotd(); }).catch(() => {});
+
+  const render = () => { renderOverview(); renderRail(); renderPanel(); renderPotd(); };
 
   // ---- events ----
   $("#trackList").addEventListener("click", e => {
