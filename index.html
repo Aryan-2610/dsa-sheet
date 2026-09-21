@@ -26,6 +26,7 @@
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="q" type="search" placeholder="Search problems…" autocomplete="off" aria-label="Search problems">
     </label>
+    <button id="authBtn" class="ghost-btn" hidden>Sign in with Google</button>
     <button id="themeBtn" class="ghost-btn" aria-label="Toggle theme">◐</button>
   </header>
 
@@ -54,9 +55,11 @@
 
   <footer class="foot">
     An independent project, not affiliated with or endorsed by any course creator or practice platform.
-    Problem names and links belong to their respective hosts. Progress is stored only in your browser.
+    Problem names and links belong to their respective hosts. Progress is stored in your browser, and synced to your account if you sign in.
+    <a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms of Service</a>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="data.js"></script>
   <script src="app.js"></script>
 </body>

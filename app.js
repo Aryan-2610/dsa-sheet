@@ -7,6 +7,46 @@
   try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
 
+  // ---- Supabase sync (optional: the app still works signed-out, using localStorage only) ----
+  // The publishable key is designed to be public; access is enforced by row-level security.
+  const SUPABASE_URL = "https://jyzvvpcedmjwkgxdtavz.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_zegioo18aJ5-Fs82LtZNDQ_JOjWKP8m";
+  const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) : null;
+  let user = null;
+
+  const rowFor = id => ({ user_id: user.id, problem_id: id, done: !!state.done[id], flag: !!state.flag[id], note: state.notes[id] || null });
+  const isEmptyRow = r => !r.done && !r.flag && !r.note;
+  const logErr = ({ error }) => { if (error) console.error("Sync failed:", error.message); };
+
+  function push(id) {
+    if (!sb || !user) return;
+    const r = rowFor(id);
+    if (isEmptyRow(r)) sb.from("progress").delete().eq("user_id", user.id).eq("problem_id", id).then(logErr);
+    else sb.from("progress").upsert(r, { onConflict: "user_id,problem_id" }).then(logErr);
+  }
+
+  async function pull() {
+    const { data, error } = await sb.from("progress").select("problem_id, done, flag, note");
+    if (error) return console.error("Load failed:", error.message);
+    const remote = new Set(data.map(r => r.problem_id));
+    // Cloud wins for anything it has; progress made while signed out is uploaded.
+    data.forEach(r => {
+      state.done[r.problem_id] = !!r.done; state.flag[r.problem_id] = !!r.flag;
+      r.note ? (state.notes[r.problem_id] = r.note) : delete state.notes[r.problem_id];
+    });
+    const localIds = new Set([...Object.keys(state.done), ...Object.keys(state.flag), ...Object.keys(state.notes)]);
+    const extra = [...localIds].filter(id => !remote.has(id) && !isEmptyRow(rowFor(id))).map(rowFor);
+    if (extra.length) sb.from("progress").upsert(extra, { onConflict: "user_id,problem_id" }).then(logErr);
+    save(); render();
+  }
+
+  function renderAuth() {
+    const b = $("#authBtn"); if (!b) return;
+    b.hidden = !sb;
+    b.textContent = user ? "Sign out" : "Sign in with Google";
+    b.title = user ? `Signed in as ${user.email}` : "Sync progress across devices";
+  }
+
   const filters = { q: "", status: "all", diff: "all" };
   let current = Math.min(Math.max(parseInt((location.hash.match(/track-(\d+)/) || [])[1] || "1", 10) - 1, 0), TRACKS.length - 1);
 
@@ -117,7 +157,8 @@
   });
   $("#panel").addEventListener("change", e => {
     if (e.target.type !== "checkbox") return;
-    state.done[e.target.closest(".prob").dataset.id] = e.target.checked; save(); render();
+    const id = e.target.closest(".prob").dataset.id;
+    state.done[id] = e.target.checked; save(); push(id); render();
   });
   $("#panel").addEventListener("click", e => {
     const b = e.target.closest(".icon"); if (!b) return;
@@ -127,7 +168,7 @@
       const v = prompt("Note for this problem:", state.notes[id] || ""); if (v === null) return;
       v.trim() ? (state.notes[id] = v.trim()) : delete state.notes[id];
     }
-    save(); render();
+    save(); push(id); render();
   });
   $("#q").addEventListener("input", e => { filters.q = e.target.value; render(); });
   const pills = (id, key) => $(id).addEventListener("click", e => {
@@ -137,7 +178,10 @@
   });
   pills("#statusPills", "status"); pills("#diffPills", "diff");
   $("#resetBtn").addEventListener("click", () => {
-    if (confirm("Reset all progress, revisit marks and notes?")) { state = { done: {}, flag: {}, notes: {} }; save(); render(); }
+    if (confirm("Reset all progress, revisit marks and notes?")) {
+      state = { done: {}, flag: {}, notes: {} }; save(); render();
+      if (sb && user) sb.from("progress").delete().eq("user_id", user.id).then(logErr);
+    }
   });
   $("#themeBtn").addEventListener("click", () => {
     const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -146,5 +190,18 @@
     try { localStorage.setItem("algoladder-theme", next); } catch (e) {}
   });
 
+  $("#authBtn").addEventListener("click", async () => {
+    if (!sb) return;
+    if (user) await sb.auth.signOut();
+    else logErr(await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } }));
+  });
+  if (sb) sb.auth.onAuthStateChange((event, session) => {
+    const prev = user; user = session ? session.user : null; renderAuth();
+    // Deferred: supabase-js must not be awaited inside this callback.
+    if (user && !prev) setTimeout(pull, 0);
+    if (!user && prev) { state = { done: {}, flag: {}, notes: {} }; save(); render(); } // don't leave the last user's data on a shared device
+  });
+
+  renderAuth();
   render();
 })();
