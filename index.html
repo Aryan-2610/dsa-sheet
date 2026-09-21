@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AlgoLadder — DSA Progress Tracker</title>
+  <meta name="description" content="A modern, open-source DSA progress tracker: 15 curated tracks, checklists, revisit marks and notes. Progress stays in your browser.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="AlgoLadder — DSA Progress Tracker">
+  <meta property="og:description" content="A modern, open-source DSA progress tracker with curated practice tracks.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    try { var t = localStorage.getItem("algoladder-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="./" aria-label="AlgoLadder home">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="var(--brand)"/><path d="M9 7v14M19 7v14M9 11h10M9 17h10" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>AlgoLadder</span>
+    </a>
+    <label class="search">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="q" type="search" placeholder="Search problems…" autocomplete="off" aria-label="Search problems">
+    </label>
+    <button id="themeBtn" class="ghost-btn" aria-label="Toggle theme">◐</button>
+  </header>
+
+  <div class="shell">
+    <aside class="rail" aria-label="Tracks">
+      <section class="overview" id="overview"></section>
+      <nav id="trackList" class="track-list"></nav>
+    </aside>
+
+    <main class="stage">
+      <div class="controls">
+        <div class="pills" id="statusPills" role="group" aria-label="Status filter">
+          <button data-v="all" class="on">All</button><button data-v="todo">To do</button>
+          <button data-v="done">Done</button><button data-v="flag">Revisit</button>
+        </div>
+        <div class="pills" id="diffPills" role="group" aria-label="Difficulty filter">
+          <button data-v="all" class="on">Any level</button><button data-v="Easy">Easy</button>
+          <button data-v="Medium">Medium</button><button data-v="Hard">Hard</button>
+        </div>
+        <button class="ghost-btn danger" id="resetBtn">Reset progress</button>
+      </div>
+      <div id="panel"></div>
+      <p id="empty" class="empty" hidden>Nothing matches those filters.</p>
+    </main>
+  </div>
+
+  <footer class="foot">
+    An independent project, not affiliated with or endorsed by any course creator or practice platform.
+    Problem names and links belong to their respective hosts. Progress is stored only in your browser.
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
